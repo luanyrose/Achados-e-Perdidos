@@ -7,8 +7,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
 import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
@@ -30,6 +32,7 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+const DEFAULT_PROFILE_IMAGE = require('./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp');
 
 const getFriendlyAuthError = (error, action) => {
   const code = error?.code || '';
@@ -58,6 +61,8 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState({ type: '', text: '' });
   const [user, setUser] = useState(null);
+  const [activeView, setActiveView] = useState('profile');
+  const [profileImage, setProfileImage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const clearForm = () => {
@@ -85,6 +90,7 @@ export default function App() {
       };
 
       setUser(userData);
+      setProfileImage(null);
       setStatus({ type: 'success', text: 'Cadastro realizado com sucesso! Bem-vindo(a).' });
       clearForm();
     } catch (error) {
@@ -101,6 +107,7 @@ export default function App() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
+      setActiveView('home');
       setStatus({ type: 'success', text: 'Login realizado com sucesso!' });
       clearForm();
     } catch (error) {
@@ -112,11 +119,37 @@ export default function App() {
     try {
       await signOut(auth);
       setUser(null);
+      setProfileImage(null);
+      setActiveView('home');
       setStatus({ type: 'success', text: 'Você saiu da conta com sucesso.' });
       clearForm();
       setScreen('login');
     } catch (error) {
       setStatus({ type: 'error', text: getFriendlyAuthError(error, 'sair da conta') });
+    }
+  };
+
+  const handlePickProfileImage = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        setStatus({ type: 'error', text: 'Permita o acesso às fotos para trocar sua imagem.' });
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      setStatus({ type: 'error', text: 'Não foi possível escolher a imagem. Tente novamente.' });
     }
   };
 
@@ -130,6 +163,8 @@ export default function App() {
     try {
       await deleteUser(auth.currentUser);
       setUser(null);
+      setProfileImage(null);
+      setActiveView('home');
       setStatus({ type: 'success', text: 'Sua conta foi excluída com sucesso.' });
       clearForm();
       setScreen('login');
@@ -151,17 +186,31 @@ export default function App() {
     }
   };
 
-  if (user) {
+  if (user && activeView === 'profile') {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
-        <View style={styles.authContainer}>
-          <Text style={styles.title}>Olá!</Text>
+        <ScrollView contentContainerStyle={styles.authContainer}>
+          <Text style={styles.title}>Meu perfil</Text>
+
+          <TouchableOpacity style={styles.profileImageButton} onPress={handlePickProfileImage}>
+            <Image
+              source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
+          <Text style={styles.changeImageText}>Toque na imagem para trocar</Text>
           <Text style={styles.userText}>{user.displayName || user.email}</Text>
 
+          <View style={styles.profileTabRow}>
+            <View style={[styles.profileTabButton, styles.profileTabButtonActive]}>
+              <Text style={[styles.tabText, styles.tabTextActive]}>Postagens de itens perdidos</Text>
+            </View>
+          </View>
+
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Você está dentro do app</Text>
-            <Text style={styles.cardText}>Sua conta foi autenticada com sucesso.</Text>
+            <Text style={styles.cardTitle}>Nenhuma postagem ainda</Text>
+            <Text style={styles.cardText}>As postagens de itens perdidos aparecerão aqui.</Text>
           </View>
 
           {status.text ? (
@@ -169,6 +218,50 @@ export default function App() {
               {status.text}
             </Text>
           ) : null}
+
+          <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Sair</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.buttonDelete} onPress={() => setConfirmDelete(true)}>
+            <Text style={styles.buttonText}>Excluir conta</Text>
+          </TouchableOpacity>
+
+          {confirmDelete && (
+            <View style={styles.confirmBox}>
+              <Text style={styles.confirmTitle}>Confirmar exclusão</Text>
+              <Text style={styles.confirmText}>
+                Essa ação apagará sua conta permanentemente. Deseja continuar?
+              </Text>
+
+              <View style={styles.confirmActions}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setConfirmDelete(false)}>
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleDeleteAccount}>
+                  <Text style={styles.buttonText}>Excluir</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (user) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="dark" />
+        <View style={styles.authContainer}>
+          <Text style={styles.title}>Bem-vindo(a)!</Text>
+          <Text style={styles.userText}>{user.displayName || user.email}</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Login realizado com sucesso</Text>
+            <Text style={styles.cardText}>O menu principal será conectado aqui futuramente.</Text>
+          </View>
 
           <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
             <Text style={styles.buttonText}>Sair</Text>
@@ -305,10 +398,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   authContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
     backgroundColor: '#f3f4f6',
+  },
+  profileImageButton: {
+    alignSelf: 'center',
+    borderRadius: 72,
+    borderWidth: 4,
+    borderColor: '#d1fae5',
+    marginBottom: 8,
+  },
+  profileImage: {
+    width: 136,
+    height: 136,
+    borderRadius: 68,
+  },
+  changeImageText: {
+    color: '#2563eb',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  profileTabRow: {
+    backgroundColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 6,
+    marginBottom: 18,
+  },
+  profileTabButton: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  profileTabButtonActive: {
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 30,
