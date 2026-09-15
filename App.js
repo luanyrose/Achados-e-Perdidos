@@ -19,6 +19,8 @@ import {
   signOut,
   deleteUser,
 } from 'firebase/auth';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBNhN0dklcvbPTwTA6MJxJ8cZzTz4bFH9c',
@@ -191,7 +193,10 @@ export default function App() {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
         <ScrollView contentContainerStyle={styles.authContainer}>
-          <Text style={styles.title}>Meu perfil</Text>
+                      <TouchableOpacity onPress={() => setActiveView('home')} style={{marginBottom:10}}>
+              <Text style={{fontSize:24}}>{'←'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>Meu perfil</Text>
 
           <TouchableOpacity style={styles.profileImageButton} onPress={handlePickProfileImage}>
             <Image
@@ -251,47 +256,101 @@ export default function App() {
   }
 
   if (user) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
-        <View style={styles.authContainer}>
-          <Text style={styles.title}>Bem-vindo(a)!</Text>
-          <Text style={styles.userText}>{user.displayName || user.email}</Text>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Login realizado com sucesso</Text>
-            <Text style={styles.cardText}>O menu principal será conectado aqui futuramente.</Text>
-          </View>
-
-          <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
-            <Text style={styles.buttonText}>Sair</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.buttonDelete} onPress={() => setConfirmDelete(true)}>
-            <Text style={styles.buttonText}>Excluir conta</Text>
-          </TouchableOpacity>
-
-          {confirmDelete && (
-            <View style={styles.confirmBox}>
-              <Text style={styles.confirmTitle}>Confirmar exclusão</Text>
-              <Text style={styles.confirmText}>
-                Essa ação apagará sua conta permanentemente. Deseja continuar?
-              </Text>
-
-              <View style={styles.confirmActions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setConfirmDelete(false)}>
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleDeleteAccount}>
-                  <Text style={styles.buttonText}>Excluir</Text>
-                </TouchableOpacity>
-              </View>
+    // Main menu after login
+    if (activeView === 'home') {
+      return (
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" />
+          <View style={styles.authContainer}>
+                        <TouchableOpacity onPress={() => setActiveView('home')} style={{marginBottom:10}}>
+              <Text style={{fontSize:24}}>{'←'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>Bem-vindo(a)!</Text>
+            <Image
+              source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
+              style={styles.profileImageHome}
+            </Image>
+            <Text style={styles.userText}>{user.displayName || user.email}</Text>
+            <View style={styles.tabRow}>
+              <TouchableOpacity
+                style={[styles.tabButton, activeView === 'lost' && styles.tabButtonActive]}
+                onPress={() => setActiveView('lost')}
+              >
+                <Text style={[styles.tabText, activeView === 'lost' && styles.tabTextActive]}>Itens Perdidos</Text>
+              </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabButton, activeView === 'found' && styles.tabButtonActive]}
+              onPress={() => setActiveView('found')}
+            >
+              <Text style={[styles.tabText, activeView === 'found' && styles.tabTextActive]}>Itens Achados</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabButton, activeView === 'profile' && styles.tabButtonActive]}
+              onPress={() => setActiveView('profile')}
+            >
+              <Text style={[styles.tabText, activeView === 'profile' && styles.tabTextActive]}>Perfil</Text>
+            </TouchableOpacity>
             </View>
-          )}
-        </View>
-      </SafeAreaView>
-    );
+            <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
+              <Text style={styles.buttonText}>Sair</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.buttonDelete} onPress={() => setConfirmDelete(true)}>
+              <Text style={styles.buttonText}>Excluir conta</Text>
+            </TouchableOpacity>
+            {confirmDelete && (
+              <View style={styles.confirmBox}>
+                <Text style={styles.confirmTitle}>Confirmar exclusão</Text>
+                <Text style={styles.confirmText}>Essa ação apagará sua conta permanentemente. Deseja continuar?</Text>
+                <View style={styles.confirmActions}>
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => setConfirmDelete(false)}>
+                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.confirmDeleteButton} onPress={handleDeleteAccount}>
+                    <Text style={styles.buttonText}>Excluir</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+      );
+    }
+    if (activeView === 'lost') {
+      return (
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" />
+          <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.title}>Itens Perdidos</Text>
+            {/* Placeholder for lost items list */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Nenhum item perdido ainda</Text>
+            </View>
+            <TouchableOpacity style={styles.tabButton} onPress={() => setActiveView('home')}>
+              <Text style={styles.tabText}>Voltar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+    if (activeView === 'found') {
+      return (
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" />
+          <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.title}>Itens Achados</Text>
+            {/* Placeholder for found items list */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Nenhum item achado ainda</Text>
+            </View>
+            <TouchableOpacity style={styles.tabButton} onPress={() => setActiveView('home')}>
+              <Text style={styles.tabText}>Voltar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+    // Fallback (should not reach)
+    return null;
   }
 
   return (
