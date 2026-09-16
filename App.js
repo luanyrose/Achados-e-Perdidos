@@ -266,7 +266,7 @@ export default function App() {
               <Text style={{fontSize:24}}>{'←'}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Bem-vindo(a)!</Text>
-            <Image
+            <Image>
               source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
               style={styles.profileImageHome}
             </Image>
