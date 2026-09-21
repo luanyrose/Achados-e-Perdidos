@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import {
   SafeAreaView,
   ScrollView,
@@ -75,6 +75,12 @@ export default function App() {
   const [itemLocation, setItemLocation] = useState('');
   const [itemCategory, setItemCategory] = useState('');
   const [itemImage, setItemImage] = useState(null);
+  const [lostItemName, setLostItemName] = useState('');
+  const [lostItemDescription, setLostItemDescription] = useState('');
+  const [lostItemLocation, setLostItemLocation] = useState('');
+  const [lostItemCategory, setLostItemCategory] = useState('');
+  const [lostItemImage, setLostItemImage] = useState(null);
+
 
 
   const clearForm = () => {
