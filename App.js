@@ -269,7 +269,7 @@ export default function App() {
             <Image
               source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
               style={styles.profileImageHome}
-            </Image>
+            />
             <Text style={styles.userText}>{user.displayName || user.email}</Text>
             <View style={styles.tabRow}>
               <TouchableOpacity
