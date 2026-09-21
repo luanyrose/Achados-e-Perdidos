@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import {
   SafeAreaView,
   ScrollView,
@@ -34,6 +36,7 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+const db = getFirestore(app);
 const DEFAULT_PROFILE_IMAGE = require('./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp');
 
 const getFriendlyAuthError = (error, action) => {
@@ -66,6 +69,13 @@ export default function App() {
   const [activeView, setActiveView] = useState('profile');
   const [profileImage, setProfileImage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const [itemName, setItemName] = useState('');
+  const [itemDescription, setItemDescription] = useState('');
+  const [itemLocation, setItemLocation] = useState('');
+  const [itemCategory, setItemCategory] = useState('');
+  const [itemImage, setItemImage] = useState(null);
+
 
   const clearForm = () => {
     setFullName('');
@@ -345,6 +355,9 @@ export default function App() {
           <StatusBar style="dark" />
           <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Itens Achados</Text>
+            <TouchableOpacity style={styles.buttonPrimary} onPress={() => setActiveView('addItem')}>
+              <Text style={styles.buttonText}>Cadastrar Item</Text>
+            </TouchableOpacity>
             {/* Placeholder for found items list */}
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Nenhum item achado ainda</Text>
@@ -356,6 +369,96 @@ export default function App() {
         </SafeAreaView>
       );
     }
+    // Add Item view
+    if (activeView === 'addItem') {
+      const handlePickItemImage = async () => {
+        try {
+          const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!permission.granted) {
+            setStatus({ type: 'error', text: 'Permita o acesso às fotos para escolher a imagem.' });
+            return;
+          }
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+          });
+          if (!result.canceled && result.assets?.[0]?.uri) {
+            setItemImage(result.assets[0].uri);
+          }
+        } catch (e) {
+          setStatus({ type: 'error', text: 'Erro ao escolher imagem.' });
+        }
+      };
+
+      const handleAddItem = async () => {
+        if (!itemName.trim() || !itemDescription.trim() || !itemLocation.trim() || !itemCategory.trim()) {
+          setStatus({ type: 'error', text: 'Preencha todos os campos.' });
+          return;
+        }
+        let imageUrl = '';
+        if (itemImage) {
+          const data = new FormData();
+          data.append('file', { uri: itemImage, type: 'image/jpeg', name: 'upload.jpg' });
+          data.append('upload_preset', 'Dynamic_folders');
+          data.append('resource_type', 'auto');
+          const resp = await fetch('https://api.cloudinary.com/v1_1/com07vbi/image/upload', {
+            method: 'POST',
+            body: data,
+          });
+          const json = await resp.json();
+          imageUrl = json.secure_url || '';
+        }
+        try {
+          await addDoc(collection(db, 'items'), {
+            name: itemName,
+            description: itemDescription,
+            location: itemLocation,
+            category: itemCategory,
+            imageUrl,
+            foundAt: new Date().toISOString(),
+            userId: user ? user.uid : null,
+          });
+          setStatus({ type: 'success', text: 'Item cadastrado com sucesso.' });
+          setItemName('');
+          setItemDescription('');
+          setItemLocation('');
+          setItemCategory('');
+          setItemImage(null);
+          setActiveView('found');
+        } catch (e) {
+          setStatus({ type: 'error', text: 'Falha ao salvar no Firestore.' });
+        }
+      };
+
+      return (
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" />
+          <ScrollView contentContainerStyle={styles.authContainer}>
+            <Text style={styles.title}>Cadastrar Item</Text>
+            <TextInput style={styles.input} placeholder="Nome" value={itemName} onChangeText={setItemName} />
+            <TextInput style={styles.input} placeholder="Descrição" value={itemDescription} onChangeText={setItemDescription} />
+            <TextInput style={styles.input} placeholder="Localização" value={itemLocation} onChangeText={setItemLocation} />
+            <TextInput style={styles.input} placeholder="Categoria" value={itemCategory} onChangeText={setItemCategory} />
+            <TouchableOpacity style={styles.buttonPrimary} onPress={handlePickItemImage}>
+              <Text style={styles.buttonText}>Selecionar Imagem</Text>
+            </TouchableOpacity>
+            {itemImage && <Image source={{ uri: itemImage }} style={{ width: 100, height: 100, marginTop: 10 }} />}
+            <TouchableOpacity style={styles.buttonPrimary} onPress={handleAddItem}>
+              <Text style={styles.buttonText}>Salvar</Text>
+            </TouchableOpacity>
+            {status.text && (
+              <Text style={[styles.message, status.type === 'error' ? styles.errorText : styles.successText]}>{status.text}</Text>
+            )}
+            <TouchableOpacity style={styles.tabButton} onPress={() => setActiveView('found')}>
+              <Text style={styles.tabText}>Cancelar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+
     // Fallback (should not reach)
     return null;
   }
