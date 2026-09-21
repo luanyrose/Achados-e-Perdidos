@@ -198,12 +198,15 @@ export default function App() {
             </TouchableOpacity>
             <Text style={styles.title}>Meu perfil</Text>
 
-          <TouchableOpacity style={styles.profileImageButton} onPress={handlePickProfileImage}>
-            <Image
-              source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+          <View style={styles.profileImageContainer}>
+            <TouchableOpacity style={styles.profileImageButton} onPress={handlePickProfileImage}>
+              <Image
+                source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
+                style={styles.profileImageHome}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.changeImageText}>Toque na imagem para trocar</Text>
           <Text style={styles.userText}>{user.displayName || user.email}</Text>
 
@@ -266,10 +269,13 @@ export default function App() {
               <Text style={{fontSize:24}}>{'←'}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Bem-vindo(a)!</Text>
-            <Image
-              source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
-              style={styles.profileImageHome}
-            />
+            <View style={styles.profileImageContainer}>
+              <Image
+                source={profileImage ? { uri: profileImage } : DEFAULT_PROFILE_IMAGE}
+                style={styles.profileImageHome}
+                resizeMode="cover"
+              />
+            </View>
             <Text style={styles.userText}>{user.displayName || user.email}</Text>
             <View style={styles.tabRow}>
               <TouchableOpacity
@@ -278,18 +284,19 @@ export default function App() {
               >
                 <Text style={[styles.tabText, activeView === 'lost' && styles.tabTextActive]}>Itens Perdidos</Text>
               </TouchableOpacity>
+            
             <TouchableOpacity
-              style={[styles.tabButton, activeView === 'found' && styles.tabButtonActive]}
-              onPress={() => setActiveView('found')}
-            >
-              <Text style={[styles.tabText, activeView === 'found' && styles.tabTextActive]}>Itens Achados</Text>
-            </TouchableOpacity>
+                style={[styles.tabButton, activeView === 'found' && styles.tabButtonActive]}
+                onPress={() => setActiveView('found')}
+              >
+                <Text style={[styles.tabText, activeView === 'found' && styles.tabTextActive]}>Itens Achados</Text>
+              </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tabButton, activeView === 'profile' && styles.tabButtonActive]}
-              onPress={() => setActiveView('profile')}
-            >
-              <Text style={[styles.tabText, activeView === 'profile' && styles.tabTextActive]}>Perfil</Text>
-            </TouchableOpacity>
+                style={[styles.tabButton, activeView === 'profile' && styles.tabButtonActive]}
+                onPress={() => setActiveView('profile')}
+              >
+                <Text style={[styles.tabText, activeView === 'profile' && styles.tabTextActive]}>Perfil</Text>
+              </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
               <Text style={styles.buttonText}>Sair</Text>
@@ -469,10 +476,15 @@ const styles = StyleSheet.create({
     borderColor: '#d1fae5',
     marginBottom: 8,
   },
-  profileImage: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
+  profileImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  profileImageHome: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   changeImageText: {
     color: '#2563eb',
@@ -553,48 +565,23 @@ const styles = StyleSheet.create({
   buttonPrimary: {
     backgroundColor: '#2563eb',
     borderRadius: 10,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonLogout: {
     backgroundColor: '#dc2626',
     borderRadius: 10,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 8,
   },
   buttonDelete: {
     backgroundColor: '#7f1d1d',
     borderRadius: 10,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 12,
-  },
-  confirmBox: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 18,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  confirmTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  confirmText: {
-    color: '#4b5563',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  confirmActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    marginTop: 8,
   },
   cancelButton: {
     flex: 1,
@@ -602,10 +589,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#111827',
-    fontWeight: '700',
+    marginRight: 4,
   },
   confirmDeleteButton: {
     flex: 1,
@@ -613,6 +597,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
+    marginLeft: 4,
   },
   buttonText: {
     color: '#fff',
